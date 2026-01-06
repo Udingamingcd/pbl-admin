@@ -107,15 +107,54 @@ $kategori_list = ['Makanan', 'Transportasi', 'Hiburan', 'Belanja', 'Kesehatan', 
             border-radius: 12px;
             padding: 14px 18px;
             border: 2px solid rgba(255, 255, 255, 0.1);
-            background: rgba(255, 255, 255, 0.05);
-            color: #fff;
+            background: rgba(30, 30, 40, 0.95) !important;
+            color: #e0e0e0 !important;
             transition: all 0.3s ease;
+            cursor: pointer;
         }
         
         .form-control:focus, .form-select:focus {
             border-color: #764ba2;
             box-shadow: 0 0 0 0.25rem rgba(118, 75, 162, 0.25);
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(40, 40, 50, 0.95) !important;
+            color: #ffffff !important;
+        }
+        
+        /* Styling untuk dropdown options */
+        .form-select option {
+            background-color: #1e1e28 !important;
+            color: #e0e0e0 !important;
+            padding: 12px;
+            font-size: 1rem;
+        }
+        
+        .form-select option:hover,
+        .form-select option:focus,
+        .form-select option:checked,
+        .form-select option:selected {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            color: white !important;
+        }
+        
+        /* Untuk browser WebKit (Chrome, Safari, etc) */
+        .form-select::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .form-select::-webkit-scrollbar-track {
+            background: rgba(30, 30, 40, 0.8);
+            border-radius: 4px;
+        }
+        
+        .form-select::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px;
+        }
+        
+        /* Untuk Firefox */
+        .form-select {
+            scrollbar-width: thin;
+            scrollbar-color: #667eea #1e1e28;
         }
         
         .form-label {
@@ -181,6 +220,12 @@ $kategori_list = ['Makanan', 'Transportasi', 'Hiburan', 'Belanja', 'Kesehatan', 
         
         .form-group {
             margin-bottom: 1.5rem;
+        }
+        
+        /* Emoji styling untuk dropdown */
+        .kategori-emoji {
+            margin-right: 8px;
+            font-size: 1.1em;
         }
     </style>
 </head>
@@ -279,10 +324,10 @@ $kategori_list = ['Makanan', 'Transportasi', 'Hiburan', 'Belanja', 'Kesehatan', 
                                             <i class="fas fa-calendar-alt me-2"></i>Periode Budget
                                         </label>
                                         <select class="form-select" id="periode" name="periode" required>
-                                            <option value="harian" <?php echo $budget['periode'] == 'harian' ? 'selected' : ''; ?>>Harian</option>
-                                            <option value="mingguan" <?php echo $budget['periode'] == 'mingguan' ? 'selected' : ''; ?>>Mingguan</option>
-                                            <option value="bulanan" <?php echo $budget['periode'] == 'bulanan' ? 'selected' : ''; ?>>Bulanan</option>
-                                            <option value="tahunan" <?php echo $budget['periode'] == 'tahunan' ? 'selected' : ''; ?>>Tahunan</option>
+                                            <option value="harian" <?php echo $budget['periode'] == 'harian' ? 'selected' : ''; ?>>📅 Harian</option>
+                                            <option value="mingguan" <?php echo $budget['periode'] == 'mingguan' ? 'selected' : ''; ?>>📆 Mingguan</option>
+                                            <option value="bulanan" <?php echo $budget['periode'] == 'bulanan' ? 'selected' : ''; ?>>🗓️ Bulanan</option>
+                                            <option value="tahunan" <?php echo $budget['periode'] == 'tahunan' ? 'selected' : ''; ?>>📊 Tahunan</option>
                                         </select>
                                     </div>
                                 </div>
@@ -293,22 +338,24 @@ $kategori_list = ['Makanan', 'Transportasi', 'Hiburan', 'Belanja', 'Kesehatan', 
                                             <i class="fas fa-filter me-2"></i>Kategori
                                         </label>
                                         <select class="form-select" id="kategori" name="kategori" required>
-                                            <?php foreach ($kategori_list as $kategori_item): ?>
+                                            <?php 
+                                            $kategori_icons = [
+                                                'Makanan' => '🍕',
+                                                'Transportasi' => '🚗',
+                                                'Hiburan' => '🎬',
+                                                'Belanja' => '🛍️',
+                                                'Kesehatan' => '🏥',
+                                                'Pendidikan' => '📚',
+                                                'Tagihan' => '🧾',
+                                                'Lainnya' => '📌'
+                                            ];
+                                            
+                                            foreach ($kategori_list as $kategori_item): 
+                                                $icon = $kategori_icons[$kategori_item] ?? '📌';
+                                            ?>
                                                 <option value="<?php echo $kategori_item; ?>" 
                                                     <?php echo $budget['kategori'] == $kategori_item ? 'selected' : ''; ?>>
-                                                    <i class="fas fa-<?php 
-                                                        switch($kategori_item) {
-                                                            case 'Makanan': echo 'utensils'; break;
-                                                            case 'Transportasi': echo 'car'; break;
-                                                            case 'Hiburan': echo 'film'; break;
-                                                            case 'Belanja': echo 'shopping-bag'; break;
-                                                            case 'Kesehatan': echo 'heartbeat'; break;
-                                                            case 'Pendidikan': echo 'graduation-cap'; break;
-                                                            case 'Tagihan': echo 'file-invoice'; break;
-                                                            default: echo 'ellipsis-h';
-                                                        }
-                                                    ?> me-2"></i>
-                                                    <?php echo $kategori_item; ?>
+                                                    <?php echo $icon . ' ' . $kategori_item; ?>
                                                 </option>
                                             <?php endforeach; ?>
                                         </select>

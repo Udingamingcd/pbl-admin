@@ -40,6 +40,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 // Kategori default untuk budget
 $kategori_list = ['Makanan', 'Transportasi', 'Hiburan', 'Belanja', 'Kesehatan', 'Pendidikan', 'Tagihan', 'Lainnya'];
+// Ikon untuk setiap kategori
+$kategori_icons = [
+    'Makanan' => 'fa-utensils',
+    'Transportasi' => 'fa-car',
+    'Hiburan' => 'fa-film',
+    'Belanja' => 'fa-shopping-bag',
+    'Kesehatan' => 'fa-heartbeat',
+    'Pendidikan' => 'fa-graduation-cap',
+    'Tagihan' => 'fa-file-invoice',
+    'Lainnya' => 'fa-ellipsis-h'
+];
 ?>
 
 <!DOCTYPE html>
@@ -201,6 +212,84 @@ $kategori_list = ['Makanan', 'Transportasi', 'Hiburan', 'Belanja', 'Kesehatan', 
             color: #fff;
             font-weight: 600;
         }
+        
+        /* Dropdown yang benar - tanpa duplikasi */
+        .form-select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: none; /* Hilangkan semua background image default */
+            padding-right: 2.5rem;
+            position: relative;
+        }
+        
+        /* Container untuk dropdown dengan panah custom */
+        .select-wrapper {
+            position: relative;
+            display: block;
+        }
+        
+        .select-wrapper::after {
+            content: "▼";
+            font-size: 12px;
+            color: #a0a0c0;
+            position: absolute;
+            right: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            transition: all 0.3s ease;
+            z-index: 2;
+        }
+        
+        /* Saat dropdown focus atau terbuka, panah berubah menjadi ke atas */
+        .select-wrapper.dropdown-open::after {
+            content: "▲";
+            color: #764ba2;
+        }
+        
+        /* Saat dropdown focus (tapi belum tentu terbuka) */
+        .form-select:focus + .select-wrapper::after {
+            color: #764ba2;
+        }
+        
+        /* Style untuk option */
+        .form-select option {
+            background-color: #1e1e28;
+            color: #fff;
+            padding: 12px;
+        }
+        
+        .form-select option:checked,
+        .form-select option:hover,
+        .form-select option:focus {
+            background-color: rgba(118, 75, 162, 0.3);
+            color: #fff;
+        }
+        
+        /* Untuk browser WebKit (Chrome, Safari) */
+        .form-select::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .form-select::-webkit-scrollbar-track {
+            background: rgba(30, 30, 40, 0.9);
+        }
+        
+        .form-select::-webkit-scrollbar-thumb {
+            background: rgba(118, 75, 162, 0.5);
+            border-radius: 4px;
+        }
+        
+        .form-select::-webkit-scrollbar-thumb:hover {
+            background: rgba(118, 75, 162, 0.7);
+        }
+        
+        /* Untuk Firefox */
+        .form-select option {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(118, 75, 162, 0.5) rgba(30, 30, 40, 0.9);
+        }
     </style>
 </head>
 <body>
@@ -322,13 +411,15 @@ $kategori_list = ['Makanan', 'Transportasi', 'Hiburan', 'Belanja', 'Kesehatan', 
                                         <label for="periode" class="form-label">
                                             <i class="fas fa-calendar-alt me-2"></i>Periode Budget
                                         </label>
-                                        <select class="form-select" id="periode" name="periode" required>
-                                            <option value="">Pilih Periode</option>
-                                            <option value="harian">Harian</option>
-                                            <option value="mingguan">Mingguan</option>
-                                            <option value="bulanan" selected>Bulanan</option>
-                                            <option value="tahunan">Tahunan</option>
-                                        </select>
+                                        <div class="select-wrapper">
+                                            <select class="form-select" id="periode" name="periode" required>
+                                                <option value="">Pilih Periode</option>
+                                                <option value="harian">Harian</option>
+                                                <option value="mingguan">Mingguan</option>
+                                                <option value="bulanan" selected>Bulanan</option>
+                                                <option value="tahunan">Tahunan</option>
+                                            </select>
+                                        </div>
                                         <small class="form-text text-muted mt-2">
                                             Pilih periode pengulangan budget
                                         </small>
@@ -340,26 +431,16 @@ $kategori_list = ['Makanan', 'Transportasi', 'Hiburan', 'Belanja', 'Kesehatan', 
                                         <label for="kategori" class="form-label">
                                             <i class="fas fa-filter me-2"></i>Kategori
                                         </label>
-                                        <select class="form-select" id="kategori" name="kategori" required>
-                                            <option value="">Pilih Kategori</option>
-                                            <?php foreach ($kategori_list as $kategori_item): ?>
-                                                <option value="<?php echo $kategori_item; ?>">
-                                                    <i class="fas fa-<?php 
-                                                        switch($kategori_item) {
-                                                            case 'Makanan': echo 'utensils'; break;
-                                                            case 'Transportasi': echo 'car'; break;
-                                                            case 'Hiburan': echo 'film'; break;
-                                                            case 'Belanja': echo 'shopping-bag'; break;
-                                                            case 'Kesehatan': echo 'heartbeat'; break;
-                                                            case 'Pendidikan': echo 'graduation-cap'; break;
-                                                            case 'Tagihan': echo 'file-invoice'; break;
-                                                            default: echo 'ellipsis-h';
-                                                        }
-                                                    ?> me-2"></i>
-                                                    <?php echo $kategori_item; ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
+                                        <div class="select-wrapper">
+                                            <select class="form-select" id="kategori" name="kategori" required>
+                                                <option value="">Pilih Kategori</option>
+                                                <?php foreach ($kategori_list as $kategori_item): ?>
+                                                    <option value="<?php echo $kategori_item; ?>">
+                                                        <?php echo $kategori_item; ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
                                         <small class="form-text text-muted mt-2">
                                             Kategori membantu dalam pelacakan pengeluaran
                                         </small>
@@ -520,7 +601,11 @@ $kategori_list = ['Makanan', 'Transportasi', 'Hiburan', 'Belanja', 'Kesehatan', 
 
         // Update preview on input
         document.getElementById('nama_budget').addEventListener('input', updatePreview);
-        document.getElementById('periode').addEventListener('change', updatePreview);
+        document.getElementById('periode').addEventListener('change', function() {
+            updatePreview();
+            // Update tanggal akhir berdasarkan periode baru
+            document.getElementById('tanggal_mulai').dispatchEvent(new Event('change'));
+        });
         document.getElementById('tanggal_mulai').addEventListener('change', updatePreview);
 
         // Trigger change event on load
@@ -549,6 +634,67 @@ $kategori_list = ['Makanan', 'Transportasi', 'Hiburan', 'Belanja', 'Kesehatan', 
                 wizardSteps.forEach(step => step.classList.remove('active'));
                 wizardSteps[Math.min(index, wizardSteps.length - 1)].classList.add('active');
             });
+        });
+        
+        // Logic untuk mengubah panah dropdown saat diklik/dibuka
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropdowns = document.querySelectorAll('.form-select');
+            
+            dropdowns.forEach(dropdown => {
+                let wrapper = dropdown.parentElement;
+                let isOpen = false;
+                
+                // Untuk mouse click
+                dropdown.addEventListener('mousedown', function(e) {
+                    isOpen = !isOpen;
+                    if (isOpen) {
+                        wrapper.classList.add('dropdown-open');
+                    } else {
+                        wrapper.classList.remove('dropdown-open');
+                    }
+                });
+                
+                // Untuk keyboard (tab + space/enter)
+                dropdown.addEventListener('keydown', function(e) {
+                    if (e.key === ' ' || e.key === 'Enter' || e.key === 'Spacebar') {
+                        isOpen = true;
+                        wrapper.classList.add('dropdown-open');
+                    }
+                });
+                
+                dropdown.addEventListener('keyup', function(e) {
+                    if (e.key === ' ' || e.key === 'Enter' || e.key === 'Spacebar') {
+                        setTimeout(() => {
+                            isOpen = false;
+                            wrapper.classList.remove('dropdown-open');
+                        }, 100);
+                    }
+                });
+                
+                // Saat kehilangan fokus
+                dropdown.addEventListener('blur', function() {
+                    isOpen = false;
+                    wrapper.classList.remove('dropdown-open');
+                });
+                
+                // Saat pilihan berubah
+                dropdown.addEventListener('change', function() {
+                    isOpen = false;
+                    wrapper.classList.remove('dropdown-open');
+                });
+                
+                // Cek status awal
+                dropdown.addEventListener('focus', function() {
+                    wrapper.classList.add('dropdown-open');
+                });
+            });
+            
+            // Fix untuk iOS Safari
+            if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                document.querySelectorAll('.form-select').forEach(select => {
+                    select.style.webkitAppearance = 'menulist';
+                });
+            }
         });
     </script>
 </body>
