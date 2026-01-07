@@ -5,7 +5,8 @@ require_once '../../middleware/auth.php';
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $user_id = $_SESSION['user_id'];
     $nama_budget = $_POST['nama_budget'];
-    $jumlah = $_POST['jumlah'];
+    // Gunakan jumlah_raw yang sudah diunformat
+    $jumlah = isset($_POST['jumlah_raw']) ? $_POST['jumlah_raw'] : str_replace('.', '', $_POST['jumlah']);
     $periode = $_POST['periode'];
     $kategori = $_POST['kategori'];
     $deskripsi = $_POST['deskripsi'];
@@ -218,7 +219,7 @@ $kategori_icons = [
             appearance: none;
             -webkit-appearance: none;
             -moz-appearance: none;
-            background-image: none; /* Hilangkan semua background image default */
+            background-image: none;
             padding-right: 2.5rem;
             position: relative;
         }
@@ -289,6 +290,23 @@ $kategori_icons = [
         .form-select option {
             scrollbar-width: thin;
             scrollbar-color: rgba(118, 75, 162, 0.5) rgba(30, 30, 40, 0.9);
+        }
+        
+        /* Style untuk input jumlah yang sudah diformat */
+        #jumlah.formatted {
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+        
+        /* Style untuk validasi */
+        .was-validated .form-control:invalid,
+        .form-control.is-invalid {
+            border-color: #dc3545;
+        }
+        
+        .was-validated .form-control:valid,
+        .form-control.is-valid {
+            border-color: #198754;
         }
     </style>
 </head>
@@ -392,14 +410,16 @@ $kategori_icons = [
                                         </label>
                                         <div class="input-group">
                                             <span class="input-group-text">Rp</span>
-                                            <input type="number" class="form-control" id="jumlah" name="jumlah" 
-                                                   placeholder="0" min="0" step="1000" required>
+                                            <input type="text" class="form-control" id="jumlah" name="jumlah" 
+                                                   placeholder="0" required>
+                                            <!-- Input hidden untuk menyimpan nilai tanpa format -->
+                                            <input type="hidden" id="jumlah_raw" name="jumlah_raw">
                                             <div class="invalid-feedback">
-                                                Mohon isi jumlah budget.
+                                                Mohon isi jumlah budget minimal Rp 1.000.
                                             </div>
                                         </div>
                                         <small class="form-text text-muted mt-2">
-                                            <i class="fas fa-info-circle me-1"></i>Jumlah dalam Rupiah
+                                            <i class="fas fa-info-circle me-1"></i>Contoh: 1.000.000
                                         </small>
                                     </div>
                                 </div>
@@ -527,22 +547,122 @@ $kategori_icons = [
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../../../js/animasi.js"></script>
     <script>
-        // Form Validation
-        (function () {
-            'use strict'
-            var forms = document.querySelectorAll('.needs-validation')
-            Array.prototype.slice.call(forms)
-                .forEach(function (form) {
-                    form.addEventListener('submit', function (event) {
-                        if (!form.checkValidity()) {
-                            event.preventDefault()
-                            event.stopPropagation()
-                        }
-                        form.classList.add('was-validated')
-                    }, false)
-                })
-        })()
-        
+        // Fungsi untuk format Rupiah dengan titik
+        function formatRupiah(angka) {
+            if (!angka) return '';
+            
+            // Hapus semua karakter selain angka
+            let number_string = angka.toString().replace(/\D/g, '');
+            
+            // Format dengan titik sebagai pemisah ribuan
+            let split = number_string.split('.');
+            let sisa = split[0].length % 3;
+            let rupiah = split[0].substr(0, sisa);
+            let ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+            
+            if (ribuan) {
+                let separator = sisa ? '.' : '';
+                rupiah += separator + ribuan.join('.');
+            }
+            
+            rupiah = split[1] != undefined ? rupiah + ',' + split[1] : rupiah;
+            return rupiah;
+        }
+
+        // Fungsi untuk unformat (hapus titik)
+        function unformatRupiah(rupiah) {
+            return rupiah.toString().replace(/\D/g, '');
+        }
+
+        // Format input jumlah saat ketik
+        document.getElementById('jumlah').addEventListener('keyup', function(e) {
+            // Dapatkan posisi kursor
+            let cursorPosition = this.selectionStart;
+            
+            // Format nilai
+            let formattedValue = formatRupiah(this.value);
+            this.value = formattedValue;
+            
+            // Toggle class formatted
+            if (formattedValue) {
+                this.classList.add('formatted');
+            } else {
+                this.classList.remove('formatted');
+            }
+            
+            // Sesuaikan posisi kursor setelah format
+            let formattedLength = this.value.length;
+            let originalLength = e.target.value.length;
+            let delta = formattedLength - originalLength;
+            
+            this.setSelectionRange(cursorPosition + delta, cursorPosition + delta);
+            
+            // Update preview
+            updatePreview();
+        });
+
+        // Juga format saat input (untuk paste)
+        document.getElementById('jumlah').addEventListener('input', function() {
+            this.value = formatRupiah(this.value);
+            if (this.value) {
+                this.classList.add('formatted');
+            } else {
+                this.classList.remove('formatted');
+            }
+            updatePreview();
+        });
+
+        // Saat form submit, unformat nilai
+        document.getElementById('budgetForm').addEventListener('submit', function(e) {
+            // Unformat nilai jumlah sebelum submit
+            const jumlahInput = document.getElementById('jumlah');
+            const jumlahUnformatted = unformatRupiah(jumlahInput.value);
+            
+            // Set nilai ke input hidden
+            document.getElementById('jumlah_raw').value = jumlahUnformatted;
+            
+            // Validasi minimal 1000
+            if (parseInt(jumlahUnformatted) < 1000) {
+                e.preventDefault();
+                jumlahInput.classList.add('is-invalid');
+                jumlahInput.nextElementSibling.textContent = 'Jumlah minimal Rp 1.000';
+                jumlahInput.focus();
+            }
+        });
+
+        // Update fungsi updatePreview untuk format Rupiah
+        function updatePreview() {
+            document.getElementById('previewNama').textContent = 
+                document.getElementById('nama_budget').value || '-';
+            
+            const jumlah = unformatRupiah(document.getElementById('jumlah').value);
+            const formattedJumlah = jumlah ? 'Rp ' + formatRupiah(jumlah) : 'Rp 0';
+            document.getElementById('previewJumlah').textContent = formattedJumlah;
+            
+            const periode = document.getElementById('periode').value;
+            document.getElementById('previewPeriode').textContent = 
+                periode ? periode.charAt(0).toUpperCase() + periode.slice(1) : '-';
+        }
+
+        // Reset form
+        function resetForm() {
+            document.getElementById('budgetForm').reset();
+            document.getElementById('jumlah').value = '';
+            document.getElementById('jumlah').classList.remove('formatted', 'is-invalid');
+            document.getElementById('tanggal_mulai').value = '<?php echo date('Y-m-d'); ?>';
+            document.getElementById('tanggal_mulai').dispatchEvent(new Event('change'));
+            updatePreview();
+        }
+
+        // Update preview on input
+        document.getElementById('nama_budget').addEventListener('input', updatePreview);
+        document.getElementById('periode').addEventListener('change', function() {
+            updatePreview();
+            // Update tanggal akhir berdasarkan periode baru
+            document.getElementById('tanggal_mulai').dispatchEvent(new Event('change'));
+        });
+        document.getElementById('tanggal_mulai').addEventListener('change', updatePreview);
+
         // Set default tanggal akhir (1 bulan dari sekarang)
         document.getElementById('tanggal_mulai').addEventListener('change', function() {
             const startDate = new Date(this.value);
@@ -569,44 +689,6 @@ $kategori_icons = [
             document.getElementById('tanggal_akhir').value = endDate.toISOString().split('T')[0];
             updatePreview();
         });
-
-        // Update preview when form changes
-        function updatePreview() {
-            document.getElementById('previewNama').textContent = 
-                document.getElementById('nama_budget').value || '-';
-            
-            const jumlah = document.getElementById('jumlah').value;
-            document.getElementById('previewJumlah').textContent = 
-                jumlah ? 'Rp ' + parseInt(jumlah).toLocaleString('id-ID') : 'Rp 0';
-            
-            const periode = document.getElementById('periode').value;
-            document.getElementById('previewPeriode').textContent = 
-                periode ? periode.charAt(0).toUpperCase() + periode.slice(1) : '-';
-        }
-
-        // Reset form
-        function resetForm() {
-            document.getElementById('budgetForm').reset();
-            document.getElementById('tanggal_mulai').value = '<?php echo date('Y-m-d'); ?>';
-            document.getElementById('tanggal_mulai').dispatchEvent(new Event('change'));
-            updatePreview();
-        }
-
-        // Auto format currency
-        document.getElementById('jumlah').addEventListener('input', function(e) {
-            let value = e.target.value;
-            e.target.value = value.replace(/\D/g, '');
-            updatePreview();
-        });
-
-        // Update preview on input
-        document.getElementById('nama_budget').addEventListener('input', updatePreview);
-        document.getElementById('periode').addEventListener('change', function() {
-            updatePreview();
-            // Update tanggal akhir berdasarkan periode baru
-            document.getElementById('tanggal_mulai').dispatchEvent(new Event('change'));
-        });
-        document.getElementById('tanggal_mulai').addEventListener('change', updatePreview);
 
         // Trigger change event on load
         document.getElementById('tanggal_mulai').dispatchEvent(new Event('change'));
@@ -695,7 +777,31 @@ $kategori_icons = [
                     select.style.webkitAppearance = 'menulist';
                 });
             }
+            
+            // Format saat load jika ada nilai sebelumnya
+            const jumlahInput = document.getElementById('jumlah');
+            if (jumlahInput.value) {
+                jumlahInput.value = formatRupiah(jumlahInput.value);
+                jumlahInput.classList.add('formatted');
+                updatePreview();
+            }
         });
+
+        // Form Validation
+        (function () {
+            'use strict'
+            var forms = document.querySelectorAll('.needs-validation')
+            Array.prototype.slice.call(forms)
+                .forEach(function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (!form.checkValidity()) {
+                            event.preventDefault()
+                            event.stopPropagation()
+                        }
+                        form.classList.add('was-validated')
+                    }, false)
+                })
+        })()
     </script>
 </body>
 </html>

@@ -27,12 +27,19 @@ if (!$budget) {
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $nama_budget = $_POST['nama_budget'];
-    $jumlah = $_POST['jumlah'];
+    $jumlah = str_replace('.', '', $_POST['jumlah']); // Hilangkan pemisah ribuan
     $periode = $_POST['periode'];
     $kategori = $_POST['kategori'];
     $deskripsi = $_POST['deskripsi'];
     $tanggal_mulai = $_POST['tanggal_mulai'];
     $tanggal_akhir = $_POST['tanggal_akhir'];
+
+    // Validasi jumlah numerik
+    if (!is_numeric($jumlah)) {
+        $_SESSION['error_message'] = "Jumlah budget harus berupa angka.";
+        header('Location: update.php?id=' . $budget_id);
+        exit();
+    }
 
     try {
         $db->query('UPDATE budget SET 
@@ -70,6 +77,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 // Kategori default untuk budget
 $kategori_list = ['Makanan', 'Transportasi', 'Hiburan', 'Belanja', 'Kesehatan', 'Pendidikan', 'Tagihan', 'Lainnya'];
+
+// Format jumlah dengan pemisah ribuan untuk ditampilkan
+$jumlah_formatted = number_format($budget['jumlah'], 0, ',', '.');
 ?>
 
 <!DOCTYPE html>
@@ -227,6 +237,17 @@ $kategori_list = ['Makanan', 'Transportasi', 'Hiburan', 'Belanja', 'Kesehatan', 
             margin-right: 8px;
             font-size: 1.1em;
         }
+        
+        /* Input jumlah dengan format */
+        .currency-input {
+            text-align: right;
+            letter-spacing: 0.5px;
+        }
+        
+        .form-text {
+            font-size: 0.85rem;
+            color: #6c757d !important;
+        }
     </style>
 </head>
 <body>
@@ -303,15 +324,15 @@ $kategori_list = ['Makanan', 'Transportasi', 'Hiburan', 'Belanja', 'Kesehatan', 
                                         </label>
                                         <div class="input-group">
                                             <span class="input-group-text">Rp</span>
-                                            <input type="number" class="form-control" id="jumlah" name="jumlah" 
-                                                   value="<?php echo $budget['jumlah']; ?>" min="0" step="1000" 
+                                            <input type="text" class="form-control currency-input" id="jumlah" name="jumlah" 
+                                                   value="<?php echo $jumlah_formatted; ?>" 
                                                    placeholder="0" required>
                                             <div class="invalid-feedback">
                                                 Mohon isi jumlah budget.
                                             </div>
                                         </div>
                                         <small class="text-muted mt-2 d-block">
-                                            <i class="fas fa-info-circle me-1"></i>Jumlah dalam Rupiah
+                                            <i class="fas fa-info-circle me-1"></i>Format: 1.000.000 (titik sebagai pemisah ribuan)
                                         </small>
                                     </div>
                                 </div>
@@ -461,10 +482,44 @@ $kategori_list = ['Makanan', 'Transportasi', 'Hiburan', 'Belanja', 'Kesehatan', 
                 })
         })()
         
-        // Auto format currency
+        // Format currency dengan pemisah ribuan
         document.getElementById('jumlah').addEventListener('input', function(e) {
-            let value = e.target.value;
-            e.target.value = value.replace(/\D/g, '');
+            // Simpan posisi kursor
+            let cursorPosition = this.selectionStart;
+            let originalLength = this.value.length;
+            
+            // Hapus semua karakter selain angka
+            let value = this.value.replace(/[^\d]/g, '');
+            
+            // Format dengan pemisah ribuan
+            if (value.length > 3) {
+                let parts = value.split('').reverse().join('').match(/\d{1,3}/g);
+                value = parts.join('.').split('').reverse().join('');
+            }
+            
+            this.value = value;
+            
+            // Sesuaikan posisi kursor setelah perubahan
+            let newLength = this.value.length;
+            let cursorOffset = newLength - originalLength;
+            this.setSelectionRange(cursorPosition + cursorOffset, cursorPosition + cursorOffset);
+        });
+        
+        // Saat form submit, hapus pemisah ribuan sebelum dikirim
+        document.getElementById('budgetForm').addEventListener('submit', function(e) {
+            let jumlahInput = document.getElementById('jumlah');
+            // Hapus titik pemisah ribuan
+            let rawValue = jumlahInput.value.replace(/\./g, '');
+            
+            // Validasi angka
+            if (isNaN(rawValue) || rawValue === '') {
+                e.preventDefault();
+                jumlahInput.classList.add('is-invalid');
+                return false;
+            }
+            
+            // Ganti nilai dengan angka murni
+            jumlahInput.value = rawValue;
         });
         
         // Date validation
@@ -478,6 +533,17 @@ $kategori_list = ['Makanan', 'Transportasi', 'Hiburan', 'Belanja', 'Kesehatan', 
             }
         });
         
+        document.getElementById('tanggal_akhir').addEventListener('change', function() {
+            const endDate = new Date(this.value);
+            const startDateInput = document.getElementById('tanggal_mulai');
+            const startDate = new Date(startDateInput.value);
+            
+            if (endDate < startDate) {
+                alert('Tanggal berakhir tidak boleh lebih awal dari tanggal mulai');
+                this.value = startDateInput.value;
+            }
+        });
+        
         // Animate form inputs on focus
         document.querySelectorAll('.form-control, .form-select').forEach(input => {
             input.addEventListener('focus', function() {
@@ -487,6 +553,18 @@ $kategori_list = ['Makanan', 'Transportasi', 'Hiburan', 'Belanja', 'Kesehatan', 
             input.addEventListener('blur', function() {
                 this.parentElement.classList.remove('input-focused');
             });
+        });
+        
+        // Format awal saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', function() {
+            let jumlahInput = document.getElementById('jumlah');
+            let value = jumlahInput.value.replace(/[^\d]/g, '');
+            
+            if (value.length > 3) {
+                let parts = value.split('').reverse().join('').match(/\d{1,3}/g);
+                value = parts.join('.').split('').reverse().join('');
+                jumlahInput.value = value;
+            }
         });
     </script>
 </body>

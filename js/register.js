@@ -25,6 +25,7 @@ class RegisterForm {
         this.setupEventListeners();
         this.setupPasswordStrength();
         this.setupFileUpload();
+        this.setupPasswordToggleButtons(); // New function for single show button
         this.isInitialized = true;
         
         console.log('RegisterForm initialized successfully');
@@ -34,11 +35,6 @@ class RegisterForm {
         if (this.form) {
             this.form.addEventListener('submit', (e) => this.handleSubmit(e));
         }
-
-        // Toggle password visibility
-        document.querySelectorAll('.toggle-password').forEach(button => {
-            button.addEventListener('click', (e) => this.togglePasswordVisibility(e));
-        });
 
         // Real-time password confirmation check
         if (this.confirmPasswordInput) {
@@ -63,6 +59,61 @@ class RegisterForm {
 
         // Modal event listeners
         this.setupModalEvents();
+    }
+
+    setupPasswordToggleButtons() {
+        // Create single show/hide buttons for password fields
+        this.createPasswordToggleButton(this.passwordInput);
+        this.createPasswordToggleButton(this.confirmPasswordInput);
+    }
+
+    createPasswordToggleButton(inputField) {
+        if (!inputField) return;
+        
+        // Create toggle button
+        const toggleBtn = document.createElement('button');
+        toggleBtn.type = 'button';
+        toggleBtn.className = 'password-toggle-btn';
+        toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
+        toggleBtn.setAttribute('aria-label', 'Show password');
+        
+        // Wrap input with a container if not already wrapped
+        const inputGroup = inputField.closest('.input-group');
+        if (inputGroup) {
+            // Remove existing toggle buttons
+            const existingBtns = inputGroup.querySelectorAll('.toggle-password');
+            existingBtns.forEach(btn => btn.remove());
+            
+            // Add new single toggle button
+            inputGroup.classList.add('password-input-group');
+            inputGroup.appendChild(toggleBtn);
+            
+            // Add event listener
+            toggleBtn.addEventListener('click', () => this.togglePasswordVisibility(inputField, toggleBtn));
+        }
+    }
+
+    togglePasswordVisibility(inputField, toggleBtn) {
+        if (!inputField || !toggleBtn) return;
+        
+        const icon = toggleBtn.querySelector('i');
+        const type = inputField.getAttribute('type') === 'password' ? 'text' : 'password';
+        
+        inputField.setAttribute('type', type);
+        
+        // Toggle icon
+        icon.classList.toggle('fa-eye');
+        icon.classList.toggle('fa-eye-slash');
+        
+        // Update aria-label
+        const isPasswordVisible = type === 'text';
+        toggleBtn.setAttribute('aria-label', isPasswordVisible ? 'Hide password' : 'Show password');
+        
+        // Add visual feedback
+        toggleBtn.style.transform = 'translateY(-50%) scale(1.1)';
+        setTimeout(() => {
+            toggleBtn.style.transform = 'translateY(-50%) scale(1)';
+        }, 200);
     }
 
     setupModalEvents() {
@@ -291,20 +342,6 @@ class RegisterForm {
                 }
             }
         }
-    }
-
-    togglePasswordVisibility(event) {
-        const button = event.currentTarget;
-        const input = button.closest('.input-group').querySelector('input');
-        const icon = button.querySelector('i');
-        
-        if (!input || !icon) return;
-        
-        const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
-        input.setAttribute('type', type);
-        
-        icon.classList.toggle('fa-eye');
-        icon.classList.toggle('fa-eye-slash');
     }
 
     handleFileUpload(event) {

@@ -496,6 +496,19 @@ $display_end_date = date('d M Y', strtotime($end_date));
                         <div class="card-body">
                             <div class="chart-container">
                                 <canvas id="reportChart" height="100"></canvas>
+                                <!-- Legenda untuk cetak -->
+                                <div class="chart-legend print-only" style="display: none;">
+                                    <div class="d-flex justify-content-center mt-3">
+                                        <div class="d-flex align-items-center me-4">
+                                            <div style="width: 12px; height: 12px; background-color: #4BC0C0; border: 1px solid #000; margin-right: 5px;"></div>
+                                            <small class="text-print-dark">Pemasukan</small>
+                                        </div>
+                                        <div class="d-flex align-items-center">
+                                            <div style="width: 12px; height: 12px; background-color: #FF6384; border: 1px solid #000; margin-right: 5px;"></div>
+                                            <small class="text-print-dark">Pengeluaran</small>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -727,6 +740,9 @@ $display_end_date = date('d M Y', strtotime($end_date));
 
     <!-- Footer -->
     <?php include 'php/includes/footer.php'; ?>
+
+    <!-- Hidden canvas for print/PDF -->
+    <canvas id="chartPrintCanvas" style="display:none; position:absolute; left:-9999px;"></canvas>
 
     <!-- JavaScript Files -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

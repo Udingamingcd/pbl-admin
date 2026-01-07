@@ -115,6 +115,92 @@
 
 /* Print Styles */
 @media print {
+    /* Improved print styles */
+    .chart-container {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+    
+    .chart-image-print {
+        max-width: 100% !important;
+        height: auto !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    /* Ensure tables don't break across pages */
+    table {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+    
+    tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+    
+    /* Better spacing for print */
+    .card, .summary-card, .table-responsive {
+        margin-bottom: 15px !important;
+    }
+    
+    /* Force background colors to print */
+    .bg-success, .bg-danger, .bg-primary, .bg-warning, .bg-info {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    /* Chart improvements */
+    canvas {
+        background: white !important;
+        border: 1px solid #000 !important;
+        page-break-inside: avoid !important;
+    }
+    
+    /* Summary cards border */
+    .summary-card {
+        border-width: 2px !important;
+        border-style: solid !important;
+    }
+    
+    /* Footer improvements */
+    .report-footer {
+        border-top: 2px solid #000 !important;
+        margin-top: 20px !important;
+        padding-top: 15px !important;
+    }
+    
+    /* Page break control */
+    .print-break-before {
+        page-break-before: always;
+    }
+    
+    .print-break-after {
+        page-break-after: always;
+    }
+    
+    .print-no-break {
+        page-break-inside: avoid;
+    }
+    
+    /* Better text contrast */
+    .text-light, .text-white {
+        color: #000 !important;
+    }
+    
+    /* Grid lines for better readability */
+    .table-bordered th, .table-bordered td {
+        border-color: #000 !important;
+    }
+    
+    /* Chart title styling */
+    .chart-title {
+        font-size: 14pt !important;
+        font-weight: bold !important;
+        text-align: center !important;
+        margin-bottom: 10px !important;
+    }
+    
     body {
         background: white !important;
         color: black !important;

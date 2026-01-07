@@ -869,3 +869,221 @@
         transform: translateY(0);
     }
 }
+
+/* PERBAIKAN UNTUK KETERBACAAN TEKS CONTOH PASSWORD PADA MODAL */
+/* Perbaikan untuk keterbacaan teks contoh password pada modal weak password */
+.security-tips code {
+    color: #000000 !important; /* Warna hitam untuk kontras maksimal */
+    background-color: rgba(255, 255, 255, 0.95) !important; /* Latar belakang putih solid */
+    font-weight: 600 !important; /* Teks lebih tebal */
+    font-family: 'Courier New', Courier, monospace !important; /* Font monospace untuk kode */
+    padding: 6px 10px !important;
+    border-radius: 6px !important;
+    border: 2px solid #ffc107 !important; /* Border warna warning */
+    display: inline-block !important;
+    margin: 4px 0 !important;
+    font-size: 0.9rem !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Untuk mode gelap, gunakan warna kontras tinggi */
+[data-bs-theme="dark"] .security-tips code {
+    color: #ffffff !important; /* Putih untuk mode gelap */
+    background-color: #1a1a1a !important; /* Latar belakang gelap solid */
+    border-color: #ffc107 !important; /* Border tetap kuning */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Perbaikan untuk keseluruhan konten security-tips */
+.security-tips {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%) !important;
+    border: 1px solid #e9ecef !important;
+    border-left: 4px solid var(--warning-color) !important;
+    padding: 1.5rem !important;
+    border-radius: 12px !important;
+    margin-top: 1rem !important;
+    margin-bottom: 1.5rem !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-bs-theme="dark"] .security-tips {
+    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%) !important;
+    border-color: #4a5568 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Perbaikan untuk teks deskripsi di security-tips */
+.security-tips .text-start {
+    color: #212529 !important;
+    line-height: 1.6 !important;
+    font-size: 0.95rem !important;
+}
+
+[data-bs-theme="dark"] .security-tips .text-start {
+    color: #e9ecef !important;
+}
+
+/* Perbaikan untuk heading di security-tips */
+.security-tips h6 {
+    color: #495057 !important;
+    font-weight: 700 !important;
+    margin-bottom: 1rem !important;
+    font-size: 1.1rem !important;
+    border-bottom: 2px solid var(--warning-color) !important;
+    padding-bottom: 0.5rem !important;
+}
+
+[data-bs-theme="dark"] .security-tips h6 {
+    color: #f8f9fa !important;
+}
+
+/* Perbaikan untuk paragraf dalam security-tips */
+.security-tips p {
+    color: #495057 !important;
+    margin-bottom: 0.75rem !important;
+    font-size: 0.95rem !important;
+}
+
+[data-bs-theme="dark"] .security-tips p {
+    color: #e9ecef !important;
+}
+
+/* Tambahan untuk modal agar lebih readable */
+.modal-body .text-start {
+    color: #212529 !important;
+    line-height: 1.6 !important;
+}
+
+[data-bs-theme="dark"] .modal-body .text-start {
+    color: #f8f9fa !important;
+}
+
+/* Perbaikan untuk alert di dalam modal */
+.modal-body .alert-warning {
+    background-color: #fff3cd !important;
+    color: #856404 !important;
+    border-color: #ffeaa7 !important;
+    text-align: left !important;
+    border-radius: 8px !important;
+    padding: 1rem !important;
+}
+
+[data-bs-theme="dark"] .modal-body .alert-warning {
+    background-color: #332701 !important;
+    color: #ffd54f !important;
+    border-color: #665c00 !important;
+}
+
+/* Perbaikan untuk list dalam modal */
+.modal-body ul {
+    padding-left: 1.5rem !important;
+    margin-bottom: 0.75rem !important;
+}
+
+.modal-body ul li {
+    margin-bottom: 0.5rem !important;
+    color: #212529 !important;
+    line-height: 1.5 !important;
+}
+
+[data-bs-theme="dark"] .modal-body ul li {
+    color: #f8f9fa !important;
+}
+
+/* Perbaikan untuk teks kecil dalam modal */
+.modal-body small {
+    color: #6c757d !important;
+    font-size: 0.875rem !important;
+}
+
+[data-bs-theme="dark"] .modal-body small {
+    color: #adb5bd !important;
+}
+
+/* Perbaikan untuk kontras teks di dalam modal */
+.modal-body p.text-muted {
+    color: #6c757d !important;
+    font-size: 1rem !important;
+}
+
+[data-bs-theme="dark"] .modal-body p.text-muted {
+    color: #adb5bd !important;
+}
+
+/* Perbaikan untuk background area security-tips */
+.modal-body .bg-light {
+    background-color: #f8f9fa !important;
+    border-radius: 8px !important;
+    padding: 1.25rem !important;
+    border: 1px solid #e9ecef !important;
+}
+
+[data-bs-theme="dark"] .modal-body .bg-light {
+    background-color: #2d3748 !important;
+    border-color: #4a5568 !important;
+}
+
+/* Perbaikan untuk teks yang menggunakan tag strong di dalam modal */
+.modal-body strong {
+    color: #212529 !important;
+    font-weight: 700 !important;
+}
+
+[data-bs-theme="dark"] .modal-body strong {
+    color: #f8f9fa !important;
+}
+
+/* Animasi untuk highlight teks contoh password */
+@keyframes highlightPassword {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+.security-tips code {
+    animation: highlightPassword 2s ease-in-out !important;
+    transition: all 0.3s ease !important;
+}
+
+.security-tips code:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Perbaikan untuk password input dengan single show button */
+.password-input-group {
+    position: relative !important;
+}
+
+.password-input-group .form-control {
+    padding-right: 45px !important;
+}
+
+.password-toggle-btn {
+    position: absolute !important;
+    right: 8px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    background: transparent !important;
+    border: none !important;
+    color: #6c757d !important;
+    padding: 6px 10px !important;
+    z-index: 5 !important;
+    cursor: pointer !important;
+    font-size: 0.9rem !important;
+}
+
+.password-toggle-btn:hover {
+    color: var(--primary-color) !important;
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    border-radius: 4px !important;
+}
+
+[data-bs-theme="dark"] .password-toggle-btn {
+    color: #adb5bd !important;
+}
+
+[data-bs-theme="dark"] .password-toggle-btn:hover {
+    color: #4cc9f0 !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+}

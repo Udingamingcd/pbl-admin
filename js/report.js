@@ -339,259 +339,73 @@ function refreshReport() {
     }, 500);
 }
 
+// Capture chart as image for print/PDF
+function captureChartForPrint() {
+    return new Promise((resolve, reject) => {
+        if (!reportChart) {
+            reject('Chart not initialized');
+            return;
+        }
+        
+        // Get chart canvas
+        const canvas = document.getElementById('reportChart');
+        
+        // Create a temporary canvas with higher resolution for print
+        const tempCanvas = document.createElement('canvas');
+        const dpr = window.devicePixelRatio || 1;
+        tempCanvas.width = canvas.width * dpr * 2;
+        tempCanvas.height = canvas.height * dpr * 2;
+        const tempCtx = tempCanvas.getContext('2d');
+        
+        // Scale for high DPI printing
+        tempCtx.scale(dpr * 2, dpr * 2);
+        
+        // Set background to white for print
+        tempCtx.fillStyle = 'white';
+        tempCtx.fillRect(0, 0, tempCanvas.width / (dpr * 2), tempCanvas.height / (dpr * 2));
+        
+        // Copy chart with white background
+        tempCtx.drawImage(canvas, 0, 0);
+        
+        // For line/bar charts, add grid lines for better print visibility
+        if (chartType !== 'pie') {
+            tempCtx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+            tempCtx.lineWidth = 0.5;
+            
+            // Draw vertical grid lines
+            const gridCount = 5;
+            const gridSpacing = tempCanvas.width / (dpr * 2) / gridCount;
+            for (let i = 1; i < gridCount; i++) {
+                tempCtx.beginPath();
+                tempCtx.moveTo(i * gridSpacing, 0);
+                tempCtx.lineTo(i * gridSpacing, tempCanvas.height / (dpr * 2));
+                tempCtx.stroke();
+            }
+            
+            // Draw horizontal grid lines
+            const verticalGridCount = 6;
+            const verticalGridSpacing = tempCanvas.height / (dpr * 2) / verticalGridCount;
+            for (let i = 1; i < verticalGridCount; i++) {
+                tempCtx.beginPath();
+                tempCtx.moveTo(0, i * verticalGridSpacing);
+                tempCtx.lineTo(tempCanvas.width / (dpr * 2), i * verticalGridSpacing);
+                tempCtx.stroke();
+            }
+        }
+        
+        // Convert to data URL with better quality
+        const chartDataURL = tempCanvas.toDataURL('image/png', 1.0);
+        
+        resolve(chartDataURL);
+    });
+}
+
 // Print the report
 function printReport() {
     showLoading();
     
     // Capture chart as image for print
     captureChartForPrint().then((chartDataURL) => {
-        // Add print-specific styles
-        const printStyles = `
-            <style>
-                @media print {
-                    body {
-                        background: white !important;
-                        color: black !important;
-                        font-size: 12pt !important;
-                        line-height: 1.5 !important;
-                        font-family: 'Arial', sans-serif !important;
-                    }
-                    
-                    body * {
-                        color: black !important;
-                        background-color: transparent !important;
-                        border-color: #000 !important;
-                    }
-                    
-                    .navbar, .filter-section, .btn-toolbar, .footer, 
-                    #printReport, #exportPDF, #refreshReport, .btn-group,
-                    .btn-outline-light, .no-print {
-                        display: none !important;
-                    }
-                    
-                    .report-header {
-                        background: white !important;
-                        color: black !important;
-                        border: 2px solid #000 !important;
-                        padding: 20px !important;
-                        margin-bottom: 30px !important;
-                        border-radius: 8px !important;
-                    }
-                    
-                    .report-header h1 {
-                        color: black !important;
-                        font-size: 24pt !important;
-                        margin-bottom: 10px !important;
-                    }
-                    
-                    .card {
-                        border: 2px solid #000 !important;
-                        break-inside: avoid;
-                        box-shadow: none !important;
-                        margin-bottom: 25px !important;
-                        page-break-inside: avoid !important;
-                        border-radius: 8px !important;
-                        overflow: hidden !important;
-                    }
-                    
-                    .card-header {
-                        background: #f0f0f0 !important;
-                        color: #000 !important;
-                        border-bottom: 2px solid #000 !important;
-                        font-weight: bold !important;
-                        font-size: 14pt !important;
-                        padding: 15px !important;
-                    }
-                    
-                    .card-body {
-                        padding: 20px !important;
-                    }
-                    
-                    .table {
-                        border: 2px solid #000 !important;
-                        font-size: 10pt !important;
-                        width: 100% !important;
-                        page-break-inside: avoid !important;
-                        border-collapse: collapse !important;
-                    }
-                    
-                    .table th, .table td {
-                        border: 1px solid #000 !important;
-                        padding: 10px !important;
-                        color: #000 !important;
-                        background: white !important;
-                        text-align: left !important;
-                    }
-                    
-                    .table th {
-                        background-color: #f0f0f0 !important;
-                        font-weight: bold !important;
-                        border-bottom: 2px solid #000 !important;
-                    }
-                    
-                    .table tfoot td {
-                        font-weight: bold !important;
-                        background-color: #f8f9fa !important;
-                        border-top: 2px solid #000 !important;
-                    }
-                    
-                    .badge {
-                        border: 1px solid #000 !important;
-                        color: #000 !important;
-                        background: white !important;
-                        font-weight: bold !important;
-                        padding: 4px 8px !important;
-                        border-radius: 4px !important;
-                        -webkit-print-color-adjust: exact !important;
-                        print-color-adjust: exact !important;
-                    }
-                    
-                    .progress {
-                        border: 1px solid #000 !important;
-                        background-color: #e9ecef !important;
-                        height: 10px !important;
-                        border-radius: 5px !important;
-                        overflow: hidden !important;
-                    }
-                    
-                    .progress-bar {
-                        background-color: #000 !important;
-                        -webkit-print-color-adjust: exact !important;
-                        print-color-adjust: exact !important;
-                        height: 100% !important;
-                    }
-                    
-                    h1, h2, h3, h4, h5, h6 {
-                        color: #000 !important;
-                        font-weight: bold !important;
-                        page-break-after: avoid !important;
-                    }
-                    
-                    .chart-container {
-                        height: 300px !important;
-                        border: 1px solid #000 !important;
-                        padding: 15px !important;
-                        background: white !important;
-                        page-break-inside: avoid !important;
-                        margin-bottom: 20px !important;
-                    }
-                    
-                    canvas {
-                        display: none !important;
-                    }
-                    
-                    .chart-image {
-                        display: block !important;
-                        width: 100% !important;
-                        height: auto !important;
-                        max-height: 280px !important;
-                        object-fit: contain !important;
-                        border: 1px solid #ddd !important;
-                        padding: 10px !important;
-                        background: white !important;
-                    }
-                    
-                    .text-success {
-                        color: #006400 !important;
-                        font-weight: bold !important;
-                    }
-                    
-                    .text-danger {
-                        color: #8B0000 !important;
-                        font-weight: bold !important;
-                    }
-                    
-                    .bg-success {
-                        background-color: #90EE90 !important;
-                        color: #000 !important;
-                        border: 1px solid #006400 !important;
-                        -webkit-print-color-adjust: exact !important;
-                        print-color-adjust: exact !important;
-                    }
-                    
-                    .bg-danger {
-                        background-color: #FFB6C1 !important;
-                        color: #000 !important;
-                        border: 1px solid #8B0000 !important;
-                        -webkit-print-color-adjust: exact !important;
-                        print-color-adjust: exact !important;
-                    }
-                    
-                    .report-footer {
-                        background: #f9f9f9 !important;
-                        border: 2px solid #000 !important;
-                        margin-top: 40px !important;
-                        padding: 20px !important;
-                        page-break-inside: avoid !important;
-                        border-radius: 8px !important;
-                    }
-                    
-                    .summary-card {
-                        border: 2px solid #000 !important;
-                        background: white !important;
-                        page-break-inside: avoid !important;
-                        padding: 15px !important;
-                        margin-bottom: 20px !important;
-                    }
-                    
-                    .text-muted {
-                        color: #666 !important;
-                    }
-                    
-                    .text-print-dark {
-                        color: #000 !important;
-                        font-weight: normal !important;
-                    }
-                    
-                    .summary-icon {
-                        background: #f0f0f0 !important;
-                        border: 1px solid #000 !important;
-                        border-radius: 50% !important;
-                        width: 50px !important;
-                        height: 50px !important;
-                        display: flex !important;
-                        align-items: center !important;
-                        justify-content: center !important;
-                        font-size: 20px !important;
-                    }
-                    
-                    .row {
-                        display: flex !important;
-                        flex-wrap: wrap !important;
-                        margin-right: -15px !important;
-                        margin-left: -15px !important;
-                    }
-                    
-                    .col-md-3, .col-md-6, .col-12 {
-                        position: relative !important;
-                        width: 100% !important;
-                        padding-right: 15px !important;
-                        padding-left: 15px !important;
-                    }
-                    
-                    @media print {
-                        .col-md-3 {
-                            flex: 0 0 25% !important;
-                            max-width: 25% !important;
-                        }
-                        .col-md-6 {
-                            flex: 0 0 50% !important;
-                            max-width: 50% !important;
-                        }
-                    }
-                    
-                    @page {
-                        margin: 20mm;
-                        size: A4 portrait;
-                    }
-                    
-                    @page :first {
-                        margin-top: 30mm;
-                    }
-                }
-            </style>
-        `;
-        
         // Clone report content
         const reportContent = document.getElementById('reportContent').cloneNode(true);
         
@@ -602,15 +416,391 @@ function printReport() {
             if (canvas) {
                 const img = document.createElement('img');
                 img.src = chartDataURL;
-                img.className = 'chart-image';
+                img.className = 'chart-image-print';
+                img.style.width = '100%';
+                img.style.height = 'auto';
+                img.style.maxHeight = '300px';
+                img.style.objectFit = 'contain';
+                img.style.display = 'block';
+                img.style.margin = '0 auto';
+                img.style.border = '1px solid #ddd';
+                img.style.padding = '10px';
+                img.style.backgroundColor = 'white';
                 img.alt = 'Grafik Keuangan';
                 canvas.parentNode.replaceChild(img, canvas);
             }
         }
         
         // Remove unnecessary elements
-        const elementsToRemove = reportContent.querySelectorAll('.no-print, .btn, .form-control, .form-select');
+        const elementsToRemove = reportContent.querySelectorAll('.no-print, .btn, .form-control, .form-select, .filter-section, .btn-group, .loading-screen');
         elementsToRemove.forEach(el => el.remove());
+        
+        // Improve print styling
+        const printStyles = `
+            <style>
+                @media print {
+                    * {
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+                    
+                    body {
+                        font-family: 'Arial', 'Helvetica', sans-serif !important;
+                        font-size: 11pt !important;
+                        line-height: 1.4 !important;
+                        color: #000000 !important;
+                        background: white !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                    }
+                    
+                    body * {
+                        color: #000000 !important;
+                        background-color: transparent !important;
+                    }
+                    
+                    /* Hide unnecessary elements */
+                    .navbar, .filter-section, .btn-toolbar, .footer, 
+                    .btn, .form-control, .form-select, .loading-screen,
+                    .no-print, .btn-outline-light, .btn-group {
+                        display: none !important;
+                    }
+                    
+                    /* Header styling */
+                    .report-header {
+                        background: white !important;
+                        border: 2px solid #000000 !important;
+                        padding: 15px !important;
+                        margin-bottom: 20px !important;
+                        text-align: center !important;
+                        page-break-after: avoid !important;
+                        border-radius: 5px !important;
+                    }
+                    
+                    .report-header h1 {
+                        color: #000000 !important;
+                        font-size: 24pt !important;
+                        margin: 0 0 10px 0 !important;
+                        text-transform: uppercase !important;
+                        letter-spacing: 1px !important;
+                    }
+                    
+                    .report-header p {
+                        color: #333333 !important;
+                        margin: 5px 0 !important;
+                        font-size: 12pt !important;
+                    }
+                    
+                    /* Card styling */
+                    .card {
+                        border: 2px solid #000000 !important;
+                        page-break-inside: avoid !important;
+                        margin-bottom: 20px !important;
+                        background: white !important;
+                        box-shadow: none !important;
+                        border-radius: 5px !important;
+                        overflow: hidden !important;
+                    }
+                    
+                    .card-header {
+                        background: #f0f0f0 !important;
+                        color: #000000 !important;
+                        border-bottom: 2px solid #000000 !important;
+                        font-weight: bold !important;
+                        font-size: 14pt !important;
+                        padding: 12px 15px !important;
+                    }
+                    
+                    .card-body {
+                        padding: 15px !important;
+                    }
+                    
+                    /* Summary cards */
+                    .summary-card {
+                        border: 2px solid #000000 !important;
+                        background: white !important;
+                        page-break-inside: avoid !important;
+                        margin-bottom: 15px !important;
+                        padding: 15px !important;
+                        border-left-width: 4px !important;
+                    }
+                    
+                    .summary-card.border-start-primary {
+                        border-left-color: #0000ff !important;
+                    }
+                    
+                    .summary-card.border-start-success {
+                        border-left-color: #008000 !important;
+                    }
+                    
+                    .summary-card.border-start-danger {
+                        border-left-color: #ff0000 !important;
+                    }
+                    
+                    .summary-card.border-start-info {
+                        border-left-color: #007bff !important;
+                    }
+                    
+                    .summary-card.border-start-warning {
+                        border-left-color: #ff9900 !important;
+                    }
+                    
+                    .summary-icon {
+                        border: 1px solid #000000 !important;
+                        background: #f0f0f0 !important;
+                        width: 40px !important;
+                        height: 40px !important;
+                        font-size: 18px !important;
+                    }
+                    
+                    /* Chart styling */
+                    .chart-container {
+                        height: auto !important;
+                        min-height: 300px !important;
+                        border: 2px solid #000000 !important;
+                        padding: 15px !important;
+                        background: white !important;
+                        page-break-inside: avoid !important;
+                        margin-bottom: 20px !important;
+                        text-align: center !important;
+                    }
+                    
+                    canvas {
+                        display: none !important;
+                    }
+                    
+                    .chart-image-print {
+                        display: block !important;
+                        width: 100% !important;
+                        height: auto !important;
+                        max-height: 280px !important;
+                        object-fit: contain !important;
+                        border: 1px solid #cccccc !important;
+                        padding: 5px !important;
+                        background: white !important;
+                        margin: 0 auto !important;
+                    }
+                    
+                    /* Table styling */
+                    .table {
+                        border: 2px solid #000000 !important;
+                        font-size: 9pt !important;
+                        width: 100% !important;
+                        border-collapse: collapse !important;
+                        page-break-inside: avoid !important;
+                    }
+                    
+                    .table th {
+                        background-color: #f0f0f0 !important;
+                        color: #000000 !important;
+                        font-weight: bold !important;
+                        border: 1px solid #000000 !important;
+                        padding: 8px !important;
+                        text-align: left !important;
+                        border-bottom: 2px solid #000000 !important;
+                    }
+                    
+                    .table td {
+                        border: 1px solid #000000 !important;
+                        padding: 6px !important;
+                        color: #000000 !important;
+                        background: white !important;
+                    }
+                    
+                    .table tfoot td {
+                        font-weight: bold !important;
+                        background-color: #f8f9fa !important;
+                        border-top: 2px solid #000000 !important;
+                    }
+                    
+                    .table tfoot tr.table-primary td {
+                        background-color: #e8f4f8 !important;
+                    }
+                    
+                    /* Badges */
+                    .badge {
+                        border: 1px solid #000000 !important;
+                        color: #000000 !important;
+                        background: white !important;
+                        font-weight: bold !important;
+                        padding: 3px 6px !important;
+                        font-size: 8pt !important;
+                    }
+                    
+                    .badge.bg-success {
+                        background-color: #d4edda !important;
+                        border-color: #006400 !important;
+                        color: #006400 !important;
+                    }
+                    
+                    .badge.bg-danger {
+                        background-color: #f8d7da !important;
+                        border-color: #8B0000 !important;
+                        color: #8B0000 !important;
+                    }
+                    
+                    /* Progress bars */
+                    .progress {
+                        border: 1px solid #000000 !important;
+                        background-color: #e9ecef !important;
+                        height: 10px !important;
+                        border-radius: 3px !important;
+                        overflow: hidden !important;
+                        margin: 5px 0 !important;
+                    }
+                    
+                    .progress-bar {
+                        background-color: #000000 !important;
+                        height: 100% !important;
+                    }
+                    
+                    .progress-bar.bg-success {
+                        background-color: #006400 !important;
+                    }
+                    
+                    .progress-bar.bg-danger {
+                        background-color: #8B0000 !important;
+                    }
+                    
+                    /* Text colors */
+                    .text-success {
+                        color: #006400 !important;
+                        font-weight: bold !important;
+                    }
+                    
+                    .text-danger {
+                        color: #8B0000 !important;
+                        font-weight: bold !important;
+                    }
+                    
+                    .text-print-dark {
+                        color: #000000 !important;
+                        font-weight: normal !important;
+                    }
+                    
+                    .text-muted {
+                        color: #666666 !important;
+                    }
+                    
+                    /* Footer */
+                    .report-footer {
+                        background: #f9f9f9 !important;
+                        border: 2px solid #000000 !important;
+                        margin-top: 30px !important;
+                        padding: 15px !important;
+                        page-break-before: avoid !important;
+                        page-break-inside: avoid !important;
+                        border-radius: 5px !important;
+                    }
+                    
+                    /* Pagination */
+                    .pagination {
+                        display: none !important;
+                    }
+                    
+                    /* Layout adjustments */
+                    .row {
+                        display: flex !important;
+                        flex-wrap: wrap !important;
+                        margin: 0 -10px !important;
+                    }
+                    
+                    .col-md-3, .col-md-6, .col-12 {
+                        padding: 0 10px !important;
+                        box-sizing: border-box !important;
+                    }
+                    
+                    .col-md-3 {
+                        width: 25% !important;
+                    }
+                    
+                    .col-md-6 {
+                        width: 50% !important;
+                    }
+                    
+                    .col-12 {
+                        width: 100% !important;
+                    }
+                    
+                    /* Font sizes */
+                    h1, h2, h3, h4, h5, h6 {
+                        color: #000000 !important;
+                        font-weight: bold !important;
+                        page-break-after: avoid !important;
+                    }
+                    
+                    h1 { font-size: 20pt !important; }
+                    h2 { font-size: 18pt !important; }
+                    h3 { font-size: 16pt !important; }
+                    h4 { font-size: 14pt !important; }
+                    h5 { font-size: 12pt !important; }
+                    h6 { font-size: 11pt !important; }
+                    
+                    small {
+                        font-size: 9pt !important;
+                    }
+                    
+                    /* Page breaks */
+                    .page-break {
+                        page-break-before: always;
+                    }
+                    
+                    .avoid-break {
+                        page-break-inside: avoid !important;
+                    }
+                    
+                    @page {
+                        margin: 15mm;
+                        size: A4 portrait;
+                    }
+                    
+                    @page :first {
+                        margin-top: 20mm;
+                    }
+                    
+                    /* Force black and white for printing */
+                    .text-primary,
+                    .text-warning,
+                    .text-info {
+                        color: #000000 !important;
+                    }
+                    
+                    /* Print-only elements */
+                    .print-only {
+                        display: block !important;
+                    }
+                    
+                    /* Chart legend for print */
+                    .chart-legend-print {
+                        display: flex !important;
+                        justify-content: center !important;
+                        margin-top: 10px !important;
+                        font-size: 9pt !important;
+                    }
+                    
+                    .chart-legend-print-item {
+                        display: flex !important;
+                        align-items: center !important;
+                        margin: 0 10px !important;
+                    }
+                    
+                    .chart-legend-print-color {
+                        width: 12px !important;
+                        height: 12px !important;
+                        margin-right: 5px !important;
+                        border: 1px solid #000000 !important;
+                    }
+                    
+                    .legend-pemasukan {
+                        background-color: #4BC0C0 !important;
+                    }
+                    
+                    .legend-pengeluaran {
+                        background-color: #FF6384 !important;
+                    }
+                }
+            </style>
+        `;
         
         // Create print window
         const printWindow = window.open('', '_blank');
@@ -626,25 +816,45 @@ function printReport() {
                 <div class="container-fluid">
                     <div class="report-header">
                         <h1><i class="fas fa-chart-bar"></i> LAPORAN KEUANGAN</h1>
-                        <p style="margin: 10px 0 5px 0; font-size: 16px;">
-                            <i class="fas fa-calendar-alt"></i> Periode: ${document.getElementById('reportPeriod').textContent}
-                        </p>
-                        <p style="margin: 5px 0; font-size: 14px;">
-                            <i class="fas fa-user"></i> Oleh: ${document.querySelector('.user-name')?.textContent || 'User'}
-                        </p>
-                        <p style="margin: 5px 0 0 0; font-size: 12px;">
-                            <i class="fas fa-clock"></i> Dicetak: ${new Date().toLocaleDateString('id-ID', { 
-                                weekday: 'long', 
-                                year: 'numeric', 
-                                month: 'long', 
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            })}
-                        </p>
+                        <div style="margin: 10px 0; padding: 5px 0; border-top: 1px solid #000; border-bottom: 1px solid #000;">
+                            <p style="margin: 3px 0;">
+                                <i class="fas fa-calendar-alt"></i> 
+                                <strong>Periode:</strong> ${document.getElementById('reportPeriod').textContent}
+                            </p>
+                            <p style="margin: 3px 0;">
+                                <i class="fas fa-user"></i> 
+                                <strong>Oleh:</strong> ${document.querySelector('.user-name')?.textContent || 'User'}
+                            </p>
+                            <p style="margin: 3px 0;">
+                                <i class="fas fa-clock"></i> 
+                                <strong>Dicetak:</strong> ${new Date().toLocaleDateString('id-ID', { 
+                                    weekday: 'long', 
+                                    year: 'numeric', 
+                                    month: 'long', 
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}
+                            </p>
+                        </div>
                     </div>
                     
                     ${reportContent.innerHTML}
+                    
+                    <!-- Add chart legend for print -->
+                    <div class="chart-legend-print print-only">
+                        <div class="chart-legend-print-item">
+                            <div class="chart-legend-print-color legend-pemasukan"></div>
+                            <span>Pemasukan</span>
+                        </div>
+                        <div class="chart-legend-print-item">
+                            <div class="chart-legend-print-color legend-pengeluaran"></div>
+                            <span>Pengeluaran</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Page break for multi-page reports -->
+                    <div style="height: 0; page-break-before: always;"></div>
                 </div>
                 <script>
                     window.onload = function() {
@@ -652,6 +862,12 @@ function printReport() {
                         const images = document.querySelectorAll('img');
                         let loadedCount = 0;
                         const totalImages = images.length;
+                        
+                        const checkImagesLoaded = () => {
+                            if (loadedCount === totalImages || totalImages === 0) {
+                                triggerPrint();
+                            }
+                        };
                         
                         if (totalImages === 0) {
                             triggerPrint();
@@ -661,32 +877,26 @@ function printReport() {
                         images.forEach(img => {
                             if (img.complete) {
                                 loadedCount++;
+                                checkImagesLoaded();
                             } else {
                                 img.onload = function() {
                                     loadedCount++;
-                                    if (loadedCount === totalImages) {
-                                        triggerPrint();
-                                    }
+                                    checkImagesLoaded();
                                 };
                                 img.onerror = function() {
                                     loadedCount++;
-                                    if (loadedCount === totalImages) {
-                                        triggerPrint();
-                                    }
+                                    checkImagesLoaded();
                                 };
                             }
                         });
                         
-                        if (loadedCount === totalImages) {
-                            triggerPrint();
-                        }
-                        
                         function triggerPrint() {
                             setTimeout(() => {
                                 window.print();
+                                // Close window after printing
                                 setTimeout(() => {
                                     window.close();
-                                }, 1000);
+                                }, 500);
                             }, 500);
                         }
                     };
@@ -701,38 +911,6 @@ function printReport() {
         console.error('Error capturing chart:', error);
         hideLoading();
         showToast('Gagal menangkap grafik. Silakan coba lagi.', 'danger');
-    });
-}
-
-// Capture chart as image for print/PDF
-function captureChartForPrint() {
-    return new Promise((resolve, reject) => {
-        if (!reportChart) {
-            reject('Chart not initialized');
-            return;
-        }
-        
-        // Get chart canvas
-        const canvas = document.getElementById('reportChart');
-        
-        // Create a temporary canvas with higher resolution for print
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = canvas.width * 2; // Higher resolution for print
-        tempCanvas.height = canvas.height * 2;
-        const tempCtx = tempCanvas.getContext('2d');
-        
-        // Fill with white background
-        tempCtx.fillStyle = 'white';
-        tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-        
-        // Scale and draw original chart
-        tempCtx.scale(2, 2);
-        tempCtx.drawImage(canvas, 0, 0);
-        
-        // Convert to data URL
-        const chartDataURL = tempCanvas.toDataURL('image/png', 1.0);
-        
-        resolve(chartDataURL);
     });
 }
 

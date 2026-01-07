@@ -107,10 +107,11 @@ require_once 'php/middleware/guest.php';
                         </div>
                     </form>
 
-                    <div class="additional-info mt-4 p-3 bg-light rounded">
-                        <h6 class="mb-2"><i class="fas fa-info-circle me-2"></i>Informasi</h6>
-                        <p class="small text-muted mb-2">Jika Anda tidak menerima email:</p>
-                        <ul class="small text-muted mb-0">
+                    <!-- Bagian yang diperbaiki -->
+                    <div class="additional-info mt-4 p-3 bg-dark-subtle border border-secondary-subtle rounded">
+                        <h6 class="mb-2 text-dark"><i class="fas fa-info-circle me-2 text-primary"></i>Informasi</h6>
+                        <p class="small text-body-secondary mb-2">Jika Anda tidak menerima email:</p>
+                        <ul class="small text-body-secondary mb-0">
                             <li>Periksa folder spam</li>
                             <li>Pastikan email yang dimasukkan benar</li>
                             <li>Hubungi support jika masih bermasalah</li>
