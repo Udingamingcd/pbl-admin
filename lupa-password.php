@@ -106,21 +106,24 @@ require_once 'php/middleware/guest.php';
                             <a href="index.php" class="text-decoration-none ms-2">Masuk di sini</a>
                         </div>
                     </form>
-
-                    <!-- Bagian yang diperbaiki -->
-                    <div class="additional-info mt-4 p-3 bg-dark-subtle border border-secondary-subtle rounded">
-                        <h6 class="mb-2 text-dark"><i class="fas fa-info-circle me-2 text-primary"></i>Informasi</h6>
-                        <p class="small text-body-secondary mb-2">Jika Anda tidak menerima email:</p>
-                        <ul class="small text-body-secondary mb-0">
+                    <!-- Bagian Additional Info -->  
+                    <div class="additional-info mt-4 p-3 bg-dark-subtle border border-secondary-subtle rounded text-center">
+                        <h6 class="mb-2">
+                            <i class="fas fa-info-circle me-2 text-primary"></i>Informasi
+                        </h6>
+                        <p class="small mb-2">Jika Anda tidak menerima email:</p>
+                        <ul class="small mb-0 ps-3 text-start d-inline-block">
                             <li>Periksa folder spam</li>
                             <li>Pastikan email yang dimasukkan benar</li>
                             <li>Hubungi support jika masih bermasalah</li>
                         </ul>
                     </div>
 
-                    <div class="text-center mt-4">
+                    <!--bagian footer copyright-->
+                       <div class="text-center mt-4">
                         <small class="text-muted">
                             &copy; 2025 Finansialku. All rights reserved.
+                            <a href="about.php" class="text-decoration-none ms-2">Tentang Kami</a>
                         </small>
                     </div>
                 </div>
