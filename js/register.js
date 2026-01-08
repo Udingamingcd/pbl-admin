@@ -25,7 +25,7 @@ class RegisterForm {
         this.setupEventListeners();
         this.setupPasswordStrength();
         this.setupFileUpload();
-        this.setupPasswordToggleButtons(); // New function for single show button
+        this.setupPasswordToggleButtons();
         this.isInitialized = true;
         
         console.log('RegisterForm initialized successfully');
@@ -62,57 +62,55 @@ class RegisterForm {
     }
 
     setupPasswordToggleButtons() {
-        // Create single show/hide buttons for password fields
-        this.createPasswordToggleButton(this.passwordInput);
-        this.createPasswordToggleButton(this.confirmPasswordInput);
+        // Setup existing toggle buttons in the input group
+        const toggleButtons = document.querySelectorAll('.toggle-password');
+        
+        toggleButtons.forEach(button => {
+            // Find the associated input field
+            const inputGroup = button.closest('.input-group');
+            const inputField = inputGroup?.querySelector('input[type="password"], input[type="text"]');
+            
+            if (inputField && button) {
+                // Add click event listener
+                button.addEventListener('click', () => {
+                    this.togglePasswordVisibility(inputField, button);
+                });
+                
+                // Initialize button state
+                this.updateToggleButtonState(inputField, button);
+            }
+        });
     }
 
-    createPasswordToggleButton(inputField) {
-        if (!inputField) return;
+    updateToggleButtonState(inputField, toggleBtn) {
+        if (!inputField || !toggleBtn) return;
         
-        // Create toggle button
-        const toggleBtn = document.createElement('button');
-        toggleBtn.type = 'button';
-        toggleBtn.className = 'password-toggle-btn';
-        toggleBtn.innerHTML = '<i class="fas fa-eye"></i>';
-        toggleBtn.setAttribute('aria-label', 'Show password');
-        
-        // Wrap input with a container if not already wrapped
-        const inputGroup = inputField.closest('.input-group');
-        if (inputGroup) {
-            // Remove existing toggle buttons
-            const existingBtns = inputGroup.querySelectorAll('.toggle-password');
-            existingBtns.forEach(btn => btn.remove());
-            
-            // Add new single toggle button
-            inputGroup.classList.add('password-input-group');
-            inputGroup.appendChild(toggleBtn);
-            
-            // Add event listener
-            toggleBtn.addEventListener('click', () => this.togglePasswordVisibility(inputField, toggleBtn));
+        const icon = toggleBtn.querySelector('i');
+        if (inputField.type === 'password') {
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+            toggleBtn.setAttribute('aria-label', 'Show password');
+        } else {
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+            toggleBtn.setAttribute('aria-label', 'Hide password');
         }
     }
 
     togglePasswordVisibility(inputField, toggleBtn) {
         if (!inputField || !toggleBtn) return;
         
-        const icon = toggleBtn.querySelector('i');
-        const type = inputField.getAttribute('type') === 'password' ? 'text' : 'password';
+        // Toggle password visibility
+        const type = inputField.type === 'password' ? 'text' : 'password';
+        inputField.type = type;
         
-        inputField.setAttribute('type', type);
-        
-        // Toggle icon
-        icon.classList.toggle('fa-eye');
-        icon.classList.toggle('fa-eye-slash');
-        
-        // Update aria-label
-        const isPasswordVisible = type === 'text';
-        toggleBtn.setAttribute('aria-label', isPasswordVisible ? 'Hide password' : 'Show password');
+        // Update button icon and state
+        this.updateToggleButtonState(inputField, toggleBtn);
         
         // Add visual feedback
-        toggleBtn.style.transform = 'translateY(-50%) scale(1.1)';
+        toggleBtn.style.transform = 'scale(1.1)';
         setTimeout(() => {
-            toggleBtn.style.transform = 'translateY(-50%) scale(1)';
+            toggleBtn.style.transform = 'scale(1)';
         }, 200);
     }
 
