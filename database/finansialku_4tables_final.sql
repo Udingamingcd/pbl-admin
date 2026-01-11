@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS users (
     foto_profil VARCHAR(255) DEFAULT NULL,
     telepon VARCHAR(20) DEFAULT NULL,
     alamat TEXT DEFAULT NULL,
-    email_verified BOOLEAN DEFAULT FALSE,
+    email_verified TINYINT(1) DEFAULT 0,
     verification_token VARCHAR(100) DEFAULT NULL,
     reset_token VARCHAR(100) DEFAULT NULL,
     reset_expires DATETIME DEFAULT NULL,
@@ -141,3 +141,10 @@ ON financial_goal(user_id, status);
 CREATE INDEX idx_admins_email ON admins(email);
 CREATE INDEX idx_admins_level ON admins(level);
 CREATE INDEX idx_admins_last_activity ON admins(last_activity);
+
+-- ===============================
+-- OTP & EMAIL VERIFICATION COLUMNS
+-- ===============================
+ALTER TABLE users
+ADD otp_code VARCHAR(6) DEFAULT NULL,
+ADD otp_expires DATETIME DEFAULT NULL;

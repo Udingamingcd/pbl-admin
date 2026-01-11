@@ -179,7 +179,7 @@ $user_id = $_SESSION['user_id'] ?? 0;
                     </li>
                     <li>
                         <a class="dropdown-item" href="profil.php">
-                            <i class="fas fa-edit me-2"></i>Edit Profil
+                            <i class="fas fa-edit me-2"></i>Pengaturan Profil
                         </a>
                     </li>
                     <li><hr class="dropdown-divider"></li>
