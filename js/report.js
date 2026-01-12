@@ -140,10 +140,15 @@ function initChart() {
 
 // Setup all event listeners
 function setupEventListeners() {
-    // Report type change
+    // Report type change - OTOMATIS TERAPKAN FILTER
     document.getElementById('reportType').addEventListener('change', function() {
         updateDateInputVisibility();
         updateDateValues(this.value);
+        
+        // Jika bukan custom, langsung terapkan filter
+        if (this.value !== 'custom') {
+            autoApplyFilter();
+        }
     });
     
     // Chart type change
@@ -171,6 +176,11 @@ function setupEventListeners() {
         resetFilter();
     });
     
+    // Auto filter button
+    document.getElementById('autoFilter').addEventListener('click', function() {
+        autoApplyFilter();
+    });
+    
     // Form submission
     document.getElementById('reportFilterForm').addEventListener('submit', function(e) {
         e.preventDefault();
@@ -183,6 +193,7 @@ function setupEventListeners() {
         if (this.value > endDate.value) {
             endDate.value = this.value;
         }
+        updateReportPeriodDisplay(this.value, endDate.value);
     });
     
     // End date change
@@ -191,6 +202,7 @@ function setupEventListeners() {
         if (this.value < startDate.value) {
             startDate.value = this.value;
         }
+        updateReportPeriodDisplay(startDate.value, this.value);
     });
     
     // Add keyboard shortcuts
@@ -213,11 +225,20 @@ function setupEventListeners() {
             exportToPDF();
         }
         
+        // Ctrl + F untuk filter otomatis
+        if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+            e.preventDefault();
+            autoApplyFilter();
+        }
+        
         // Escape untuk reset
         if (e.key === 'Escape') {
             resetFilter();
         }
     });
+    
+    // Quick filter buttons (tambahan untuk kemudahan)
+    addQuickFilterButtons();
 }
 
 // Show loading screen
@@ -260,7 +281,7 @@ function updateDateValues(reportType) {
             // Mulai Senin ini
             const monday = new Date(today);
             monday.setDate(today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1));
-            // Akhir Minggu ini
+            // Akhir Minggu ini (hari Minggu)
             const sunday = new Date(monday);
             sunday.setDate(monday.getDate() + 6);
             
@@ -279,30 +300,33 @@ function updateDateValues(reportType) {
             startDateInput.value = firstDayYear.toISOString().split('T')[0];
             endDateInput.value = lastDayYear.toISOString().split('T')[0];
             break;
+        case 'custom':
+            // Untuk custom, biarkan nilai yang ada
+            break;
+    }
+    
+    // Update report period display
+    if (startDateInput.value && endDateInput.value) {
+        updateReportPeriodDisplay(startDateInput.value, endDateInput.value);
     }
 }
 
 // Initialize date inputs with current date
 function initDateInputs() {
     const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
     
     const startDateInput = document.getElementById('startDate');
     const endDateInput = document.getElementById('endDate');
-    
-    if (!startDateInput.value) {
-        startDateInput.value = yesterday.toISOString().split('T')[0];
-    }
-    
-    if (!endDateInput.value) {
-        endDateInput.value = today.toISOString().split('T')[0];
-    }
     
     // Set max date to today
     const todayStr = today.toISOString().split('T')[0];
     startDateInput.max = todayStr;
     endDateInput.max = todayStr;
+    
+    // Update report period display
+    if (startDateInput.value && endDateInput.value) {
+        updateReportPeriodDisplay(startDateInput.value, endDateInput.value);
+    }
 }
 
 // Setup responsive table
@@ -331,12 +355,146 @@ function filterReport() {
     document.getElementById('reportFilterForm').submit();
 }
 
+// Auto apply filter (untuk perubahan otomatis)
+function autoApplyFilter() {
+    showLoading();
+    
+    // Submit form
+    document.getElementById('reportFilterForm').submit();
+}
+
 // Refresh report
 function refreshReport() {
     showLoading();
     setTimeout(() => {
         location.reload();
     }, 500);
+}
+
+// Add quick filter buttons untuk kemudahan
+function addQuickFilterButtons() {
+    const filterSection = document.querySelector('.filter-section .card-body');
+    if (!filterSection) return;
+    
+    // Cek apakah quick buttons sudah ada
+    if (document.getElementById('quickFilterButtons')) {
+        return;
+    }
+    
+    const quickButtons = document.createElement('div');
+    quickButtons.id = 'quickFilterButtons';
+    quickButtons.className = 'quick-filter-buttons mt-3';
+    quickButtons.innerHTML = `
+        <div class="d-flex flex-wrap gap-2">
+            <small class="text-muted me-2 align-self-center">Quick Filter:</small>
+            <button type="button" class="btn btn-sm btn-outline-primary quick-filter-btn" data-type="daily">
+                <i class="fas fa-calendar-day me-1"></i>Hari Ini
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary quick-filter-btn" data-type="weekly">
+                <i class="fas fa-calendar-week me-1"></i>Minggu Ini
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary quick-filter-btn" data-type="monthly">
+                <i class="fas fa-calendar-alt me-1"></i>Bulan Ini
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary quick-filter-btn" data-type="yearly">
+                <i class="fas fa-calendar me-1"></i>Tahun Ini
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary quick-filter-btn" data-type="last7days">
+                <i class="fas fa-history me-1"></i>7 Hari Terakhir
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary quick-filter-btn" data-type="last30days">
+                <i class="fas fa-chart-line me-1"></i>30 Hari Terakhir
+            </button>
+        </div>
+    `;
+    
+    filterSection.appendChild(quickButtons);
+    
+    // Add event listeners untuk quick filter buttons
+    document.querySelectorAll('.quick-filter-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const filterType = this.getAttribute('data-type');
+            applyQuickFilter(filterType);
+        });
+    });
+}
+
+// Apply quick filter berdasarkan tipe
+function applyQuickFilter(filterType) {
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+    const reportTypeSelect = document.getElementById('reportType');
+    const today = new Date();
+    
+    switch(filterType) {
+        case 'daily':
+            reportTypeSelect.value = 'daily';
+            startDateInput.value = today.toISOString().split('T')[0];
+            endDateInput.value = today.toISOString().split('T')[0];
+            break;
+        case 'weekly':
+            reportTypeSelect.value = 'weekly';
+            const monday = new Date(today);
+            monday.setDate(today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1));
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            startDateInput.value = monday.toISOString().split('T')[0];
+            endDateInput.value = sunday.toISOString().split('T')[0];
+            break;
+        case 'monthly':
+            reportTypeSelect.value = 'monthly';
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            startDateInput.value = firstDay.toISOString().split('T')[0];
+            endDateInput.value = lastDay.toISOString().split('T')[0];
+            break;
+        case 'yearly':
+            reportTypeSelect.value = 'yearly';
+            const firstDayYear = new Date(today.getFullYear(), 0, 1);
+            const lastDayYear = new Date(today.getFullYear(), 11, 31);
+            startDateInput.value = firstDayYear.toISOString().split('T')[0];
+            endDateInput.value = lastDayYear.toISOString().split('T')[0];
+            break;
+        case 'last7days':
+            reportTypeSelect.value = 'custom';
+            const last7Days = new Date(today);
+            last7Days.setDate(today.getDate() - 6);
+            startDateInput.value = last7Days.toISOString().split('T')[0];
+            endDateInput.value = today.toISOString().split('T')[0];
+            break;
+        case 'last30days':
+            reportTypeSelect.value = 'custom';
+            const last30Days = new Date(today);
+            last30Days.setDate(today.getDate() - 29);
+            startDateInput.value = last30Days.toISOString().split('T')[0];
+            endDateInput.value = today.toISOString().split('T')[0];
+            break;
+    }
+    
+    // Update UI
+    updateDateInputVisibility();
+    updateReportPeriodDisplay(startDateInput.value, endDateInput.value);
+    
+    // Show notification
+    showToast('Filter diterapkan: ' + getFilterTypeName(filterType), 'success');
+    
+    // Auto apply filter
+    setTimeout(() => {
+        autoApplyFilter();
+    }, 500);
+}
+
+// Get filter type name for display
+function getFilterTypeName(filterType) {
+    const names = {
+        'daily': 'Hari Ini',
+        'weekly': 'Minggu Ini',
+        'monthly': 'Bulan Ini',
+        'yearly': 'Tahun Ini',
+        'last7days': '7 Hari Terakhir',
+        'last30days': '30 Hari Terakhir'
+    };
+    return names[filterType] || filterType;
 }
 
 // Capture chart as image for print/PDF
@@ -1670,6 +1828,7 @@ function addKeyboardHints() {
         { key: 'Ctrl+P', action: 'Cetak Laporan' },
         { key: 'Ctrl+E', action: 'Ekspor PDF' },
         { key: 'Ctrl+R', action: 'Refresh' },
+        { key: 'Ctrl+F', action: 'Filter Otomatis' },
         { key: 'Esc', action: 'Reset Filter' }
     ];
     

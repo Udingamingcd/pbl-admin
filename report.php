@@ -130,7 +130,7 @@ function getReportData($db, $user_id, $start_date, $end_date, $report_type) {
     }
 }
 
-// Fungsi untuk mendapatkan data chart berdasarkan periode
+// Fungsi untuk mendapatkan data chart berdasarkan periode - FIXED VERSION
 function getChartDataByPeriod($db, $user_id, $start_date, $end_date, $period) {
     $labels = [];
     $pemasukan_data = [];
@@ -139,12 +139,42 @@ function getChartDataByPeriod($db, $user_id, $start_date, $end_date, $period) {
     $start = new DateTime($start_date);
     $end = new DateTime($end_date);
     
-    if ($period == 'daily' || ($end->diff($start)->days <= 31)) {
-        // Harian
+    // Untuk memastikan tanggal akhir termasuk dalam perhitungan
+    $end_inclusive = clone $end;
+    $end_inclusive->modify('+1 day');
+    
+    // Tentukan interval berdasarkan periode
+    if ($period == 'daily') {
+        // Harian - untuk 1 hari saja
+        $date_str = $start->format('Y-m-d');
+        $labels[] = $start->format('d M');
+        
+        // Pemasukan hari ini
+        $db->query('SELECT COALESCE(SUM(jumlah), 0) as total FROM transaksi 
+                    WHERE user_id = :user_id AND jenis = "pemasukan" 
+                    AND tanggal = :date');
+        $db->bind(':user_id', $user_id);
+        $db->bind(':date', $date_str);
+        $pemasukan = $db->single();
+        $pemasukan_data[] = (float)$pemasukan['total'];
+        
+        // Pengeluaran hari ini
+        $db->query('SELECT COALESCE(SUM(jumlah), 0) as total FROM transaksi 
+                    WHERE user_id = :user_id AND jenis = "pengeluaran" 
+                    AND tanggal = :date');
+        $db->bind(':user_id', $user_id);
+        $db->bind(':date', $date_str);
+        $pengeluaran = $db->single();
+        $pengeluaran_data[] = (float)$pengeluaran['total'];
+        
+    } elseif ($period == 'weekly') {
+        // Mingguan - 7 hari terakhir
         $interval = new DateInterval('P1D');
-        $period_series = new DatePeriod($start, $interval, $end);
+        $period_series = new DatePeriod($start, $interval, $end_inclusive);
         
         foreach ($period_series as $date) {
+            if ($date > $end) break;
+            
             $date_str = $date->format('Y-m-d');
             $labels[] = $date->format('d M');
             
@@ -167,12 +197,22 @@ function getChartDataByPeriod($db, $user_id, $start_date, $end_date, $period) {
             $pengeluaran_data[] = (float)$pengeluaran['total'];
         }
         
-    } elseif ($period == 'monthly' || ($end->diff($start)->days <= 365)) {
-        // Bulanan
+    } elseif ($period == 'monthly') {
+        // Bulanan - 12 bulan terakhir
         $interval = new DateInterval('P1M');
-        $period_series = new DatePeriod($start, $interval, $end);
+        // Hitung 12 bulan terakhir dari tanggal akhir
+        $start_month = clone $end;
+        $start_month->modify('-11 months');
+        $start_month->modify('first day of this month');
+        
+        $end_inclusive_month = clone $end;
+        $end_inclusive_month->modify('first day of next month');
+        
+        $period_series = new DatePeriod($start_month, $interval, $end_inclusive_month);
         
         foreach ($period_series as $date) {
+            if ($date->format('Y-m') > $end->format('Y-m')) break;
+            
             $month_str = $date->format('Y-m');
             $labels[] = $date->format('M Y');
             
@@ -195,12 +235,22 @@ function getChartDataByPeriod($db, $user_id, $start_date, $end_date, $period) {
             $pengeluaran_data[] = (float)$pengeluaran['total'];
         }
         
-    } else {
-        // Tahunan
+    } elseif ($period == 'yearly') {
+        // Tahunan - 5 tahun terakhir
         $interval = new DateInterval('P1Y');
-        $period_series = new DatePeriod($start, $interval, $end);
+        // Hitung 5 tahun terakhir dari tanggal akhir
+        $start_year = clone $end;
+        $start_year->modify('-4 years');
+        $start_year->modify('first day of January');
+        
+        $end_inclusive_year = clone $end;
+        $end_inclusive_year->modify('first day of next year');
+        
+        $period_series = new DatePeriod($start_year, $interval, $end_inclusive_year);
         
         foreach ($period_series as $date) {
+            if ($date->format('Y') > $end->format('Y')) break;
+            
             $year_str = $date->format('Y');
             $labels[] = $date->format('Y');
             
@@ -222,13 +272,120 @@ function getChartDataByPeriod($db, $user_id, $start_date, $end_date, $period) {
             $pengeluaran = $db->single();
             $pengeluaran_data[] = (float)$pengeluaran['total'];
         }
+        
+    } else {
+        // Custom atau rentang pendek (<= 31 hari) - harian
+        $days_diff = $end->diff($start)->days;
+        
+        if ($days_diff <= 31) {
+            // Harian untuk rentang pendek
+            $interval = new DateInterval('P1D');
+            $period_series = new DatePeriod($start, $interval, $end_inclusive);
+            
+            foreach ($period_series as $date) {
+                if ($date > $end) break;
+                
+                $date_str = $date->format('Y-m-d');
+                $labels[] = $date->format('d M');
+                
+                // Pemasukan hari ini
+                $db->query('SELECT COALESCE(SUM(jumlah), 0) as total FROM transaksi 
+                            WHERE user_id = :user_id AND jenis = "pemasukan" 
+                            AND tanggal = :date');
+                $db->bind(':user_id', $user_id);
+                $db->bind(':date', $date_str);
+                $pemasukan = $db->single();
+                $pemasukan_data[] = (float)$pemasukan['total'];
+                
+                // Pengeluaran hari ini
+                $db->query('SELECT COALESCE(SUM(jumlah), 0) as total FROM transaksi 
+                            WHERE user_id = :user_id AND jenis = "pengeluaran" 
+                            AND tanggal = :date');
+                $db->bind(':user_id', $user_id);
+                $db->bind(':date', $date_str);
+                $pengeluaran = $db->single();
+                $pengeluaran_data[] = (float)$pengeluaran['total'];
+            }
+        } elseif ($days_diff <= 365) {
+            // Bulanan untuk rentang menengah
+            $interval = new DateInterval('P1M');
+            $end_inclusive_month = clone $end;
+            $end_inclusive_month->modify('first day of next month');
+            $period_series = new DatePeriod($start, $interval, $end_inclusive_month);
+            
+            foreach ($period_series as $date) {
+                if ($date->format('Y-m') > $end->format('Y-m')) break;
+                
+                $month_str = $date->format('Y-m');
+                $labels[] = $date->format('M Y');
+                
+                // Pemasukan bulan ini
+                $db->query('SELECT COALESCE(SUM(jumlah), 0) as total FROM transaksi 
+                            WHERE user_id = :user_id AND jenis = "pemasukan" 
+                            AND DATE_FORMAT(tanggal, "%Y-%m") = :month');
+                $db->bind(':user_id', $user_id);
+                $db->bind(':month', $month_str);
+                $pemasukan = $db->single();
+                $pemasukan_data[] = (float)$pemasukan['total'];
+                
+                // Pengeluaran bulan ini
+                $db->query('SELECT COALESCE(SUM(jumlah), 0) as total FROM transaksi 
+                            WHERE user_id = :user_id AND jenis = "pengeluaran" 
+                            AND DATE_FORMAT(tanggal, "%Y-%m") = :month');
+                $db->bind(':user_id', $user_id);
+                $db->bind(':month', $month_str);
+                $pengeluaran = $db->single();
+                $pengeluaran_data[] = (float)$pengeluaran['total'];
+            }
+        } else {
+            // Tahunan untuk rentang panjang
+            $interval = new DateInterval('P1Y');
+            $end_inclusive_year = clone $end;
+            $end_inclusive_year->modify('first day of next year');
+            $period_series = new DatePeriod($start, $interval, $end_inclusive_year);
+            
+            foreach ($period_series as $date) {
+                if ($date->format('Y') > $end->format('Y')) break;
+                
+                $year_str = $date->format('Y');
+                $labels[] = $date->format('Y');
+                
+                // Pemasukan tahun ini
+                $db->query('SELECT COALESCE(SUM(jumlah), 0) as total FROM transaksi 
+                            WHERE user_id = :user_id AND jenis = "pemasukan" 
+                            AND DATE_FORMAT(tanggal, "%Y") = :year');
+                $db->bind(':user_id', $user_id);
+                $db->bind(':year', $year_str);
+                $pemasukan = $db->single();
+                $pemasukan_data[] = (float)$pemasukan['total'];
+                
+                // Pengeluaran tahun ini
+                $db->query('SELECT COALESCE(SUM(jumlah), 0) as total FROM transaksi 
+                            WHERE user_id = :user_id AND jenis = "pengeluaran" 
+                            AND DATE_FORMAT(tanggal, "%Y") = :year');
+                $db->bind(':user_id', $user_id);
+                $db->bind(':year', $year_str);
+                $pengeluaran = $db->single();
+                $pengeluaran_data[] = (float)$pengeluaran['total'];
+            }
+        }
     }
     
-    // Jika data kosong, buat array minimal
+    // Jika data kosong, buat array dengan hari ini
     if (empty($labels)) {
-        $labels = [date('d M', strtotime($start_date))];
+        $today = new DateTime();
+        $labels = [$today->format('d M')];
         $pemasukan_data = [0];
         $pengeluaran_data = [0];
+    }
+    
+    // Pastikan jumlah data label sama dengan jumlah data pemasukan/pengeluaran
+    $data_count = count($labels);
+    if (count($pemasukan_data) !== $data_count) {
+        $pemasukan_data = array_pad($pemasukan_data, $data_count, 0);
+    }
+    if (count($pengeluaran_data) !== $data_count) {
+        $pengeluaran_data = array_pad($pengeluaran_data, $data_count, 0);
     }
     
     return [
@@ -377,6 +534,9 @@ $display_end_date = date('d M Y', strtotime($end_date));
                                     <button type="button" class="btn btn-secondary" id="resetFilter">
                                         <i class="fas fa-redo me-1"></i>Reset
                                     </button>
+                                    <button type="button" class="btn btn-outline-info" id="autoFilter">
+                                        <i class="fas fa-bolt me-1"></i>Terapkan Otomatis
+                                    </button>
                                 </div>
                             </div>
                         </form>
@@ -492,6 +652,14 @@ $display_end_date = date('d M Y', strtotime($end_date));
                     <div class="card shadow mb-4 chart-section">
                         <div class="card-header bg-gradient-primary text-white">
                             <h6 class="m-0 fw-bold"><i class="fas fa-chart-line me-2"></i>Grafik Keuangan</h6>
+                            <div class="chart-subtitle">
+                                <small>
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Periode: <?php echo $display_start_date; ?> - <?php echo $display_end_date; ?>
+                                    | Jenis: <?php echo ucfirst($report_type); ?>
+                                    | Tipe: <?php echo ucfirst($chart_type); ?> Chart
+                                </small>
+                            </div>
                         </div>
                         <div class="card-body">
                             <div class="chart-container">
@@ -509,6 +677,13 @@ $display_end_date = date('d M Y', strtotime($end_date));
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                            <div class="chart-info mt-3 text-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-chart-bar me-1"></i>
+                                    Grafik menampilkan data <?php echo $report_type == 'daily' ? 'harian' : ($report_type == 'weekly' ? 'mingguan' : ($report_type == 'monthly' ? 'bulanan' : 'tahunan')); ?> 
+                                    untuk periode yang dipilih.
+                                </small>
                             </div>
                         </div>
                     </div>
@@ -773,6 +948,8 @@ $display_end_date = date('d M Y', strtotime($end_date));
         
         const chartType = '<?php echo $chart_type; ?>';
         const reportType = '<?php echo $report_type; ?>';
+        const startDate = '<?php echo $start_date; ?>';
+        const endDate = '<?php echo $end_date; ?>';
     </script>
     <script src="js/report.js"></script>
 </body>

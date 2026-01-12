@@ -23,23 +23,6 @@ session_start();
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.php">Beranda</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="about.php">Tentang</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="features.php">Fitur</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="contact.php">Kontak</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
     </nav>
 
     <!-- Hero Section -->
@@ -272,14 +255,14 @@ session_start();
                         <div class="row align-items-center">
                             <div class="col-md-6 text-center mb-4 mb-md-0">
                                 <div class="ai-partner">
-                                    <img src="assets/partners/deepseek.png" alt="DeepSeek" class="ai-logo mb-3">
+                                    <img src="assets/partners/logo deepseek.png" alt="DeepSeek" class="ai-logo mb-3">
                                     <h5>DeepSeek AI</h5>
                                     <p class="text-muted">Asisten pengembangan kode dan debugging</p>
                                 </div>
                             </div>
                             <div class="col-md-6 text-center">
                                 <div class="ai-partner">
-                                    <img src="assets/partners/chatgpt.png" alt="ChatGPT" class="ai-logo mb-3">
+                                    <img src="assets/partners/logo chatgpt.png" alt="ChatGPT" class="ai-logo mb-3">
                                     <h5>ChatGPT</h5>
                                     <p class="text-muted">Ideasi fitur dan optimasi user experience</p>
                                 </div>
@@ -288,7 +271,7 @@ session_start();
                         <div class="text-center mt-4">
                             <p class="mb-0">
                                 <i class="fas fa-lightbulb text-warning"></i>
-                                <span class="ms-2">AI membantu kami meningkatkan produktivitas hingga 40% dalam pengembangan</span>
+                                <span class="ms-2">AI membantu kami meningkatkan produktivitas hingga 70% dalam pengembangan</span>
                             </p>
                         </div>
                     </div>
