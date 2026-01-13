@@ -125,12 +125,7 @@ require_once 'php/koneksi.php';
                             <a href="register.php" class="text-decoration-none">Daftar Akun Baru</a>
                         </div>
 
-                        <!-- index.php - Tambahkan setelah link daftar akun baru -->
-                        <div class="text-center mt-3">
-                            <a href="admin/auth/login.php" class="text-decoration-none btn btn-outline-secondary btn-sm">
-                                <i class="fas fa-user-shield me-1"></i> Login sebagai Admin
-                            </a>
-                        </div>
+
                     </form>
 
                     <div class="text-center mt-4">
